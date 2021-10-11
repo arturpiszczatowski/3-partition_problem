@@ -11,7 +11,7 @@ using my_multiset = vector<double>;
 using my_triplets = vector<vector<double>>;
 
 bool test_for_triplets(my_multiset multiset){
-    if(!sizeof multiset % 3 == 0){
+    if(multiset.size()%3 != 0){
         cout << "Multiset can't be divided into triplets.";
         return false;
     }

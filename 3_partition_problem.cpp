@@ -58,18 +58,55 @@ my_triplets sort_into_triplets(my_multiset multiset){
     test_for_triplets(multiset);
     test_for_np_complete(multiset);
     int target = test_for_target(multiset);
+
     my_triplets result;
 
-    for(int i=0; i <= number_of_triplets; i++){
-        auto subset = [&](my_multiset multiset) {
-            vector<int> subset;
-            for(int n : multiset){
+    for(int i = 0; i <= number_of_triplets; i++){
+        vector<int> subset = [&](my_multiset multiset) -> vector<int> {
+            vector<int> current_triplet;
+            do{
+                //First number of a triplet
+                for(int j = 0; j <= multiset.size();){
+                    int a = multiset[j];
+                    current_triplet.push_back(a);
+                    multiset.erase(multiset.begin() + j);
 
-            }
-            return subset;
-        }
+                    int l = 0;
+                    //Second number of a triplet
+                    for(int k = 0; k <= multiset.size();){
+                        int b = multiset[k];
+                        multiset.erase(multiset.begin() + k);
+
+                        //Third number of a triplet
+                        if(a+b+multiset[l]!=target){
+                            l++;
+
+                            //If no third number fits first two, change second number
+                            if(l>=multiset.size()){
+                                k++;
+                                l=0+k;
+                                multiset.insert(multiset.begin()+k-1, b);
+                            } else {
+                                multiset.insert(multiset.begin()+k, b);
+                            }
+
+                        } else {
+                            current_triplet.push_back(b);
+                            current_triplet.push_back(multiset[l]);
+                            multiset.erase(multiset.begin()+l);
+                            break;
+                        }
+                    }
+                }
+            }while(current_triplet.size() != 3);
+
+            return current_triplet;
+        };
+
         result.push_back(subset);
     }
+
+    return result;
 }
 
 int main(int argc, char** argv) {

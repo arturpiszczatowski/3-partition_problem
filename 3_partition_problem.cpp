@@ -96,6 +96,11 @@ my_triplets sort_into_triplets(my_multiset multiset){
                             current_triplet.push_back(b);
                             current_triplet.push_back(multiset[l]);
                             multiset.erase(multiset.begin()+l);
+                            cout << " [";
+                            for(int o : current_triplet) {
+                                cout << " " << o << " ";
+                            }
+                            cout << "]";
                             break;
                         }
                     }
@@ -107,7 +112,6 @@ my_triplets sort_into_triplets(my_multiset multiset){
 
         result.push_back(subset(multiset));
     }
-
 
     return result;
 }

@@ -146,13 +146,13 @@ int main(int argc, char** argv) {
     }
     cout << "]";
 
-    auto final = sort_into_triplets(numbers);
-
-    for(vector<int> n : final){
-        cout << "[";
-        for(int m : n){
-            cout << m << " ";
-        }
-        cout << "] ";
-    }
+//    auto final = sort_into_triplets(numbers);
+//
+//    for(vector<int> n : final){
+//        cout << "[";
+//        for(int m : n){
+//            cout << m << " ";
+//        }
+//        cout << "] ";
+//    }
 }

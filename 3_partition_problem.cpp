@@ -3,6 +3,7 @@
 #include<fstream>
 #include<sstream>
 #include<vector>
+#include<random>
 
 using namespace std;
 
@@ -11,6 +12,9 @@ using my_multiset = vector<int>;
 using my_triplets = vector<vector<int>>;
 
 int number_of_triplets = 0;
+
+random_device rd;
+mt19937 rand_gen(rd());
 
 bool test_for_triplets(my_multiset multiset){
     if(multiset.size()%3 != 0){
@@ -29,32 +33,23 @@ int test_for_target(my_multiset multiset){
         sum_of_numbers += n;
     }
 
-//    auto sum_of_numbers = [=]() {
-//        int sum = 0;
-//        for(int n : multiset){
-//            sum += n;
-//        }
-//        return sum;
-//    };
-
     int target = sum_of_numbers / number_of_triplets;
-    cout << "\nYour target is: " << target;
+    cout << "Your target is: " << target << "\n";
 
     return target;
 }
 
-auto test_for_np_complete(my_multiset multiset){
-    int target = test_for_target(multiset);
-    for(int i : multiset){
-        if(i>=target/4 && i<=target/2){
-            return true;
-        }
-        else{
-            cout << "\nThe 3-partition problem isn't strongly NP-complete";
-            return false;
-        }
-    }
-}
+//auto test_for_np_complete(my_multiset multiset) {
+//    int target = test_for_target(multiset);
+//    for (int i : multiset) {
+//        if (i >= target / 4 && i <= target / 2) {
+//            return true;
+//        } else {
+//            cout << "\nThe 3-partition problem isn't strongly NP-complete";
+//            return false;
+//        }
+//    }
+//}
 
 my_triplets sort_into_triplets(my_multiset multiset){
     test_for_triplets(multiset);
@@ -116,6 +111,26 @@ my_triplets sort_into_triplets(my_multiset multiset){
     return result;
 }
 
+void show_my_triplets(my_triplets triplets){
+    cout << "{";
+    for(auto a : triplets){
+        cout << "[";
+        for(int b : a){
+            cout << " " << b << " ";
+        }
+        cout << "]";
+    }
+    cout << "}";
+}
+void show_my_multiset(my_multiset  multiset){
+    cout << "Given numbers: [ ";
+    for(int n : multiset) {
+        cout << n << " ";
+    }
+    cout << "]\n";
+}
+
+
 my_multiset acquier_numbers(string file_name){
     vector<int> result;
     ifstream txt_file;
@@ -135,24 +150,52 @@ my_multiset acquier_numbers(string file_name){
     return result;
 }
 
+my_triplets random_seperate_into_triplets(my_multiset multiset){
+    my_triplets random_result;
+    do {
+        vector<int> trippy;
+        for (int i = 0; i < 3; i++) {
+            uniform_int_distribution<int> random(0, multiset.size()-1);
+            int index = random(rand_gen);
+            trippy.push_back(multiset[index]);
+            multiset.erase(multiset.begin() + index);
+        }
+        random_result.push_back(trippy);
+    }while(!multiset.empty());
+
+    return random_result;
+}
+
+double goal_function(my_triplets triplets, int target){
+    double score = 0.0;
+    int sum = 0;
+
+    for(auto a : triplets){
+        for(int b : a){
+            sum =+ b;
+        }
+        if(sum!=target){
+            score++;
+        }
+    }
+    cout << "-> Score: " << score;
+    return score;
+}
+
+my_triplets next_solution(my_triplets triplet){
+    next_permutation(triplet.begin(), triplet.end());
+    return triplet;
+}
+
+
 int main(int argc, char** argv) {
 
-    string directory = "C:\\Users\\Lenovo\\Desktop\\MHA\\";
-    my_multiset numbers = acquier_numbers(directory + argv[1]);
+    string directory = "Z:\\public_html\\ROK 3\\Metaheurystyka\\Lab 2\\"; //"C:\\Users\\Lenovo\\Desktop\\MHA\\";
+    my_multiset numbers = acquier_numbers(directory + "numbers.txt");
 
-    cout << "Given numbers: [ ";
-    for(int n : numbers) {
-        cout << n << " ";
-    }
-    cout << "]";
+    show_my_multiset(numbers);
+    int target = test_for_target(numbers);
+    show_my_triplets(random_seperate_into_triplets(numbers));
+    goal_function(random_seperate_into_triplets(numbers), target);
 
-//    auto final = sort_into_triplets(numbers);
-//
-//    for(vector<int> n : final){
-//        cout << "[";
-//        for(int m : n){
-//            cout << m << " ";
-//        }
-//        cout << "] ";
-//    }
 }

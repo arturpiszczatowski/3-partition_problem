@@ -4,6 +4,8 @@
 #include<sstream>
 #include<vector>
 #include<random>
+#include<algorithm>
+#include<numeric>
 
 using namespace std;
 
@@ -166,36 +168,60 @@ my_triplets random_seperate_into_triplets(my_multiset multiset){
     return random_result;
 }
 
-double goal_function(my_triplets triplets, int target){
-    double score = 0.0;
-    int sum = 0;
+double goal_function(my_triplets triplets){
+    double final_score = triplets.size();
+    int final_target;
+    vector<int> targets;
 
     for(auto a : triplets){
+        int sum = 0;
         for(int b : a){
-            sum =+ b;
-        }
-        if(sum!=target){
-            score++;
+            sum += b;
+            targets.push_back(sum);
         }
     }
-    cout << "-> Score: " << score;
-    return score;
+
+    for(auto target : targets){
+        double current_score = triplets.size();
+        for(auto a : triplets){
+            if(accumulate(a.begin(), a.end(), 0) == target){
+                current_score -= 1;
+            }
+        }
+        if(current_score < final_score){
+            final_score = current_score;
+            final_target = target;
+        }
+    }
+
+    cout << "->Current target: " << final_target << " ->Score: " << final_score <<"\n";
+    return final_score;
 }
 
-my_triplets next_solution(my_triplets triplet){
-    next_permutation(triplet.begin(), triplet.end());
-    return triplet;
+my_triplets next_solution(my_triplets triplets){
+    int i = 1;
+    for(auto &triplet : triplets) {
+        sort(triplet.begin(), triplet.end());
+        do {
+            cout << i << ") ";
+            show_my_triplets(triplets);
+            goal_function(triplets);
+            i++;
+        } while (next_permutation(triplet.begin(), triplet.end()));
+    }
+    return triplets;
 }
 
 
 int main(int argc, char** argv) {
 
-    string directory = "Z:\\public_html\\ROK 3\\Metaheurystyka\\Lab 2\\"; //"C:\\Users\\Lenovo\\Desktop\\MHA\\";
-    my_multiset numbers = acquier_numbers(directory + "numbers.txt");
+    string directory = "C:\\Users\\Lenovo\\Desktop\\MHE\\"; //"Z:\\public_html\\ROK 3\\Metaheurystyka\\Lab 2\\";
+    my_multiset numbers = acquier_numbers(directory + argv[1]);
 
     show_my_multiset(numbers);
     int target = test_for_target(numbers);
-    show_my_triplets(random_seperate_into_triplets(numbers));
-    goal_function(random_seperate_into_triplets(numbers), target);
+    next_solution(random_seperate_into_triplets(numbers));
+//    show_my_triplets(random_seperate_into_triplets(numbers));
+//    goal_function(random_seperate_into_triplets(numbers));
 
 }

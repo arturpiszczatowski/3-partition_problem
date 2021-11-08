@@ -15,6 +15,10 @@ using my_triplets = vector<vector<int>>;
 
 int number_of_triplets = 0;
 
+double final_score;
+
+int iteration = 1;
+
 random_device rd;
 mt19937 rand_gen(rd());
 
@@ -169,7 +173,7 @@ my_triplets random_seperate_into_triplets(my_multiset multiset){
 }
 
 double goal_function(my_triplets triplets){
-    double final_score = triplets.size();
+    final_score = triplets.size();
     int final_target;
     vector<int> targets;
 
@@ -199,14 +203,13 @@ double goal_function(my_triplets triplets){
 }
 
 my_triplets next_solution(my_triplets triplets){
-    int i = 1;
     for(auto &triplet : triplets) {
         sort(triplet.begin(), triplet.end());
         do {
-            cout << i << ") ";
+            cout << iteration << ") ";
             show_my_triplets(triplets);
             goal_function(triplets);
-            i++;
+            iteration++;
         } while (next_permutation(triplet.begin(), triplet.end()));
     }
     return triplets;
@@ -220,8 +223,16 @@ int main(int argc, char** argv) {
 
     show_my_multiset(numbers);
     int target = test_for_target(numbers);
-    next_solution(random_seperate_into_triplets(numbers));
-//    show_my_triplets(random_seperate_into_triplets(numbers));
-//    goal_function(random_seperate_into_triplets(numbers));
+
+    vector<my_triplets> checked_solutions;
+
+    do {
+        my_triplets current_triplets = random_seperate_into_triplets(numbers);
+        if(!(find(checked_solutions.begin(), checked_solutions.end(), current_triplets) != checked_solutions.end())) {
+            next_solution(current_triplets);
+            checked_solutions.push_back(current_triplets);
+        }
+    } while(final_score != 0);
+
 
 }

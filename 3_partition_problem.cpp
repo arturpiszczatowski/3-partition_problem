@@ -13,11 +13,6 @@ using my_multiset = vector<int>;
 
 using my_triplets = vector<vector<int>>;
 
-int number_of_triplets = 0;
-
-double final_score;
-
-int iteration = 1;
 
 random_device rd;
 mt19937 rand_gen(rd());
@@ -32,7 +27,7 @@ bool test_for_triplets(my_multiset multiset){
 
 int test_for_target(my_multiset multiset){
     test_for_triplets(multiset);
-    number_of_triplets = multiset.size()/3;
+    int number_of_triplets = multiset.size()/3;
 
     int sum_of_numbers = 0;
     for(int n : multiset){
@@ -57,65 +52,65 @@ int test_for_target(my_multiset multiset){
 //    }
 //}
 
-my_triplets sort_into_triplets(my_multiset multiset){
-    test_for_triplets(multiset);
-//    test_for_np_complete(multiset);
-    int target = test_for_target(multiset);
-
-    my_triplets result;
-
-    for(int i = 0; i <= number_of_triplets; i++){
-        auto subset = [&](my_multiset multiset) -> vector<int> {
-            vector<int> current_triplet;
-            do{
-                //First number of a triplet
-                for(int j = 0; j <= multiset.size();){
-                    int a = multiset[j];
-                    current_triplet.push_back(a);
-                    multiset.erase(multiset.begin() + j);
-
-                    int l = 0;
-                    //Second number of a triplet
-                    for(int k = 0; k <= multiset.size();){
-                        int b = multiset[k];
-                        multiset.erase(multiset.begin() + k);
-
-                        //Third number of a triplet
-                        if(a+b+multiset[l]!=target){
-                            l++;
-
-                            //If no third number fits first two, change second number
-                            if(l>=multiset.size()){
-                                multiset.insert(multiset.begin()+k, b);
-                                k++;
-                                l=0+k;
-                            } else {
-                                multiset.insert(multiset.begin()+k, b);
-                            }
-
-                        } else {
-                            current_triplet.push_back(b);
-                            current_triplet.push_back(multiset[l]);
-                            multiset.erase(multiset.begin()+l);
-                            cout << " [";
-                            for(int o : current_triplet) {
-                                cout << " " << o << " ";
-                            }
-                            cout << "]";
-                            break;
-                        }
-                    }
-                }
-            }while(current_triplet.size() != 3);
-
-            return current_triplet;
-        };
-
-        result.push_back(subset(multiset));
-    }
-
-    return result;
-}
+//my_triplets sort_into_triplets(my_multiset multiset){
+//    test_for_triplets(multiset);
+////    test_for_np_complete(multiset);
+//    int target = test_for_target(multiset);
+//
+//    my_triplets result;
+//
+//    for(int i = 0; i <= number_of_triplets; i++){
+//        auto subset = [&](my_multiset multiset) -> vector<int> {
+//            vector<int> current_triplet;
+//            do{
+//                //First number of a triplet
+//                for(int j = 0; j <= multiset.size();){
+//                    int a = multiset[j];
+//                    current_triplet.push_back(a);
+//                    multiset.erase(multiset.begin() + j);
+//
+//                    int l = 0;
+//                    //Second number of a triplet
+//                    for(int k = 0; k <= multiset.size();){
+//                        int b = multiset[k];
+//                        multiset.erase(multiset.begin() + k);
+//
+//                        //Third number of a triplet
+//                        if(a+b+multiset[l]!=target){
+//                            l++;
+//
+//                            //If no third number fits first two, change second number
+//                            if(l>=multiset.size()){
+//                                multiset.insert(multiset.begin()+k, b);
+//                                k++;
+//                                l=0+k;
+//                            } else {
+//                                multiset.insert(multiset.begin()+k, b);
+//                            }
+//
+//                        } else {
+//                            current_triplet.push_back(b);
+//                            current_triplet.push_back(multiset[l]);
+//                            multiset.erase(multiset.begin()+l);
+//                            cout << " [";
+//                            for(int o : current_triplet) {
+//                                cout << " " << o << " ";
+//                            }
+//                            cout << "]";
+//                            break;
+//                        }
+//                    }
+//                }
+//            }while(current_triplet.size() != 3);
+//
+//            return current_triplet;
+//        };
+//
+//        result.push_back(subset(multiset));
+//    }
+//
+//    return result;
+//}
 
 void show_my_triplets(my_triplets triplets){
     cout << "{";
@@ -156,7 +151,7 @@ my_multiset acquier_numbers(string file_name){
     return result;
 }
 
-my_triplets random_seperate_into_triplets(my_multiset multiset){
+my_triplets next_solution(my_multiset multiset){
     my_triplets random_result;
     do {
         vector<int> trippy;
@@ -173,23 +168,23 @@ my_triplets random_seperate_into_triplets(my_multiset multiset){
 }
 
 double goal_function(my_triplets triplets){
-    final_score = triplets.size();
-    int final_target;
+    double full_score = 0;
     vector<int> targets;
 
-    for(auto a : triplets){
-        int sum = 0;
-        for(int b : a){
-            sum += b;
-            targets.push_back(sum);
-        }
+    for(auto triplet : triplets){
+        int triplet_target = accumulate(triplet.begin(), triplet.end(), 0);
+        full_score += triplet_target;
+        targets.push_back(triplet_target);
     }
 
+    int final_target = 0;
+    double final_score = full_score;
+
     for(auto target : targets){
-        double current_score = triplets.size();
-        for(auto a : triplets){
-            if(accumulate(a.begin(), a.end(), 0) == target){
-                current_score -= 1;
+        double current_score = full_score;
+        for(auto triplet : triplets){
+            if(accumulate(triplet.begin(), triplet.end(), 0) == target){
+                current_score -= target;
             }
         }
         if(current_score < final_score){
@@ -202,17 +197,51 @@ double goal_function(my_triplets triplets){
     return final_score;
 }
 
-my_triplets next_solution(my_triplets triplets){
+vector<my_triplets> all_permutations(my_triplets triplets){
+    vector<my_triplets> all_permutations;
     for(auto &triplet : triplets) {
         sort(triplet.begin(), triplet.end());
         do {
-            cout << iteration << ") ";
-            show_my_triplets(triplets);
-            goal_function(triplets);
-            iteration++;
+            all_permutations.push_back(triplets);
         } while (next_permutation(triplet.begin(), triplet.end()));
     }
-    return triplets;
+    return all_permutations;
+}
+
+my_triplets brute_force(my_triplets triplets, vector<int> numbers){
+    vector<my_triplets> checked_solutions;
+    double score_check;
+    my_triplets best_solution;
+    double best_score = accumulate(numbers.begin(), numbers.end(), 0);
+
+    int iteration_limit = 0;
+    for(int i=numbers.size(); i>1; i-- ){
+        iteration_limit *= i;
+    }
+
+    int iteration = 1;
+
+    do {
+        my_triplets current_triplets = next_solution(numbers);
+        if(!(find(checked_solutions.begin(), checked_solutions.end(), current_triplets) != checked_solutions.end())) {
+            cout << iteration << ") ";
+            show_my_triplets(current_triplets);
+            score_check = goal_function(current_triplets);
+            checked_solutions.push_back(current_triplets);
+
+            if(score_check < best_score){
+                best_score = score_check;
+                best_solution = current_triplets;
+            }
+
+            for(auto permutation : all_permutations(current_triplets)){
+                checked_solutions.push_back(permutation);
+                iteration++;
+            }
+        }
+
+    } while(score_check != 0 || checked_solutions.size() < iteration_limit);
+    return best_solution;
 }
 
 
@@ -222,17 +251,8 @@ int main(int argc, char** argv) {
     my_multiset numbers = acquier_numbers(directory + argv[1]);
 
     show_my_multiset(numbers);
-    int target = test_for_target(numbers);
-
-    vector<my_triplets> checked_solutions;
-
-    do {
-        my_triplets current_triplets = random_seperate_into_triplets(numbers);
-        if(!(find(checked_solutions.begin(), checked_solutions.end(), current_triplets) != checked_solutions.end())) {
-            next_solution(current_triplets);
-            checked_solutions.push_back(current_triplets);
-        }
-    } while(final_score != 0);
-
+    test_for_target(numbers);
+    my_triplets starting_set = next_solution(numbers);
+    brute_force(starting_set, numbers);
 
 }

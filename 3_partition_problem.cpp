@@ -6,6 +6,7 @@
 #include<random>
 #include<algorithm>
 #include<numeric>
+#include<chrono>
 
 using namespace std;
 
@@ -214,8 +215,8 @@ my_triplets brute_force(my_triplets triplets, vector<int> numbers){
     my_triplets best_solution;
     double best_score = accumulate(numbers.begin(), numbers.end(), 0);
 
-    int iteration_limit = 0;
-    for(int i=numbers.size(); i>1; i-- ){
+    int iteration_limit = 1;
+    for(int i=numbers.size(); i>=1; i-- ){
         iteration_limit *= i;
     }
 
@@ -235,24 +236,32 @@ my_triplets brute_force(my_triplets triplets, vector<int> numbers){
             }
 
             for(auto permutation : all_permutations(current_triplets)){
+                cout << iteration << ") ";
+                show_my_triplets(permutation);
+                score_check = goal_function(permutation);
                 checked_solutions.push_back(permutation);
                 iteration++;
             }
         }
-
-    } while(score_check != 0 || checked_solutions.size() < iteration_limit);
+    } while(score_check != 0 && iteration < iteration_limit);
     return best_solution;
 }
 
-
 int main(int argc, char** argv) {
 
-    string directory = "C:\\Users\\Lenovo\\Desktop\\MHE\\"; //"Z:\\public_html\\ROK 3\\Metaheurystyka\\Lab 2\\";
-    my_multiset numbers = acquier_numbers(directory + argv[1]);
+
+    my_multiset numbers = acquier_numbers(argv[1]);
+    if(numbers.empty()){
+        return 0;
+    }
 
     show_my_multiset(numbers);
     test_for_target(numbers);
     my_triplets starting_set = next_solution(numbers);
-    brute_force(starting_set, numbers);
+    my_triplets best_solution = brute_force(starting_set, numbers);
+    cout << "Best solution: ";
+    show_my_triplets(best_solution);
+    goal_function(best_solution);
+
 
 }

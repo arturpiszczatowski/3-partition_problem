@@ -9,11 +9,8 @@
 #include<chrono>
 
 using namespace std;
-
 using my_multiset = vector<int>;
-
 using my_triplets = vector<vector<int>>;
-
 
 random_device rd;
 mt19937 rand_gen(rd());
@@ -25,7 +22,6 @@ bool test_for_triplets(my_multiset multiset){
     }
     return true;
 }
-
 int test_for_target(my_multiset multiset){
     test_for_triplets(multiset);
     int number_of_triplets = multiset.size()/3;
@@ -40,78 +36,6 @@ int test_for_target(my_multiset multiset){
 
     return target;
 }
-
-//auto test_for_np_complete(my_multiset multiset) {
-//    int target = test_for_target(multiset);
-//    for (int i : multiset) {
-//        if (i >= target / 4 && i <= target / 2) {
-//            return true;
-//        } else {
-//            cout << "\nThe 3-partition problem isn't strongly NP-complete";
-//            return false;
-//        }
-//    }
-//}
-
-//my_triplets sort_into_triplets(my_multiset multiset){
-//    test_for_triplets(multiset);
-////    test_for_np_complete(multiset);
-//    int target = test_for_target(multiset);
-//
-//    my_triplets result;
-//
-//    for(int i = 0; i <= number_of_triplets; i++){
-//        auto subset = [&](my_multiset multiset) -> vector<int> {
-//            vector<int> current_triplet;
-//            do{
-//                //First number of a triplet
-//                for(int j = 0; j <= multiset.size();){
-//                    int a = multiset[j];
-//                    current_triplet.push_back(a);
-//                    multiset.erase(multiset.begin() + j);
-//
-//                    int l = 0;
-//                    //Second number of a triplet
-//                    for(int k = 0; k <= multiset.size();){
-//                        int b = multiset[k];
-//                        multiset.erase(multiset.begin() + k);
-//
-//                        //Third number of a triplet
-//                        if(a+b+multiset[l]!=target){
-//                            l++;
-//
-//                            //If no third number fits first two, change second number
-//                            if(l>=multiset.size()){
-//                                multiset.insert(multiset.begin()+k, b);
-//                                k++;
-//                                l=0+k;
-//                            } else {
-//                                multiset.insert(multiset.begin()+k, b);
-//                            }
-//
-//                        } else {
-//                            current_triplet.push_back(b);
-//                            current_triplet.push_back(multiset[l]);
-//                            multiset.erase(multiset.begin()+l);
-//                            cout << " [";
-//                            for(int o : current_triplet) {
-//                                cout << " " << o << " ";
-//                            }
-//                            cout << "]";
-//                            break;
-//                        }
-//                    }
-//                }
-//            }while(current_triplet.size() != 3);
-//
-//            return current_triplet;
-//        };
-//
-//        result.push_back(subset(multiset));
-//    }
-//
-//    return result;
-//}
 
 void show_my_triplets(my_triplets triplets){
     cout << "{";
@@ -131,7 +55,6 @@ void show_my_multiset(my_multiset  multiset){
     }
     cout << "]\n";
 }
-
 
 my_multiset acquier_numbers(string file_name){
     vector<int> result;
@@ -167,7 +90,6 @@ my_triplets next_solution(my_multiset multiset){
 
     return random_result;
 }
-
 double goal_function(my_triplets triplets){
     double full_score = 0;
     vector<int> targets;
@@ -209,14 +131,18 @@ vector<my_triplets> all_permutations(my_triplets triplets){
     return all_permutations;
 }
 
-my_triplets brute_force(my_triplets triplets, vector<int> numbers){
+my_triplets brute_force(vector<int> numbers,
+                        function<void(int c, double dt)> on_statistics = [](int c, double dt){}){
+    auto start = chrono::steady_clock::now();
+
     vector<my_triplets> checked_solutions;
-    double score_check;
     my_triplets best_solution;
+    double score_check;
     double best_score = accumulate(numbers.begin(), numbers.end(), 0);
+    int stat_goal_function_calls = 0;
 
     int iteration_limit = 1;
-    for(int i=numbers.size(); i>=1; i-- ){
+    for(int i=numbers.size(); i>=1; i--){
         iteration_limit *= i;
     }
 
@@ -225,7 +151,9 @@ my_triplets brute_force(my_triplets triplets, vector<int> numbers){
     do {
         my_triplets current_triplets = next_solution(numbers);
         if(!(find(checked_solutions.begin(), checked_solutions.end(), current_triplets) != checked_solutions.end())) {
-            cout << iteration << ") ";
+            cout << stat_goal_function_calls+1 << ") ";
+            iteration++;
+            stat_goal_function_calls++;
             show_my_triplets(current_triplets);
             score_check = goal_function(current_triplets);
             checked_solutions.push_back(current_triplets);
@@ -236,14 +164,59 @@ my_triplets brute_force(my_triplets triplets, vector<int> numbers){
             }
 
             for(auto permutation : all_permutations(current_triplets)){
-                cout << iteration << ") ";
-                show_my_triplets(permutation);
-                score_check = goal_function(permutation);
-                checked_solutions.push_back(permutation);
                 iteration++;
+                checked_solutions.push_back(permutation);
             }
         }
     } while(score_check != 0 && iteration < iteration_limit);
+    auto finish = chrono::steady_clock::now();
+    chrono::duration<double> duration = finish - start;
+    on_statistics(stat_goal_function_calls, duration.count());
+
+    return best_solution;
+}
+
+my_triplets generate_random_neighbour(my_triplets current_triplets){
+    uniform_int_distribution<int> distr_set(0, current_triplets.size()-2);
+    uniform_int_distribution<int> distr_triplet(0, 2);
+    int index_set = distr_set(rand_gen);
+    int index_triplet_a = distr_triplet(rand_gen);
+    int index_triplet_b = distr_triplet(rand_gen);
+    std::swap(current_triplets[index_set][index_triplet_a], current_triplets[index_set+1][index_triplet_b]);
+    return current_triplets;
+}
+my_triplets hill_climb_rnd(vector<int> numbers, int N,
+                        function<void(int c, double dt)> on_statistics = [](int c, double dt){}){
+
+    auto start = chrono::steady_clock::now();
+
+    vector<my_triplets> checked_solutions;
+    my_triplets best_solution = next_solution(numbers);
+    double best_score = accumulate(numbers.begin(), numbers.end(), 0);
+
+    double score_check;
+
+    my_triplets current_triplets = best_solution;
+
+
+    for(int i=0; i < N; i++){
+        current_triplets = generate_random_neighbour(best_solution);
+        cout << i+1 << ") ";
+        show_my_triplets(current_triplets);
+        score_check = goal_function(current_triplets);
+
+        if(score_check < best_score){
+            best_solution = current_triplets;
+            best_score = score_check;
+        }
+
+//        if(best_score == 0) break;
+    }
+
+    auto finish = chrono::steady_clock::now();
+    chrono::duration<double> duration = finish - start;
+    on_statistics(N, duration.count());
+
     return best_solution;
 }
 
@@ -257,11 +230,18 @@ int main(int argc, char** argv) {
 
     show_my_multiset(numbers);
     test_for_target(numbers);
-    my_triplets starting_set = next_solution(numbers);
-    my_triplets best_solution = brute_force(starting_set, numbers);
-    cout << "Best solution: ";
-    show_my_triplets(best_solution);
-    goal_function(best_solution);
 
+    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
+        cout << "BF => # count: " << c << "; dt: " << dt << endl;
+    });
+    my_triplets best_solution_HCR = hill_climb_rnd(numbers, 10000, [](int c, double dt){
+        cout << "HCR => # count: " << c << "; dt: " << dt << endl;
+    });
 
+    cout << "\nBest BF: ";
+    show_my_triplets(best_solution_BF);
+    goal_function(best_solution_BF);
+    cout << "Best HCR: ";
+    show_my_triplets(best_solution_HCR);
+    goal_function(best_solution_HCR);
 }

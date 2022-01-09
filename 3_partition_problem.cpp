@@ -185,8 +185,36 @@ my_triplets generate_random_neighbour(my_triplets current_triplets){
     std::swap(current_triplets[index_set][index_triplet_a], current_triplets[index_set+1][index_triplet_b]);
     return current_triplets;
 }
-my_triplets hill_climb_rnd(vector<int> numbers, int N,
-                        function<void(int c, double dt)> on_statistics = [](int c, double dt){}){
+
+vector<my_triplets> generate_all_neighbours(my_triplets current_triplets){
+    vector<my_triplets> all_neighbours;
+    int number_of_triplets = current_triplets.size();
+    int number_of_swaps = (number_of_triplets-1)*3;
+
+    for(int i = 0; i < number_of_triplets; i++){
+        int second_triplet_index = 0;
+            for(int j = 0; j < 3; j++){
+                for(int k = 0; k < number_of_swaps; k++){
+                    int second_element_index = k%3;
+                    my_triplets buffer = current_triplets;
+                    if(second_triplet_index != i) {
+                        swap(buffer[i][j], buffer[second_triplet_index][second_element_index]);
+                        if (!(find(all_neighbours.begin(), all_neighbours.end(), buffer) != all_neighbours.end())) {
+                            all_neighbours.push_back(buffer);
+                        }
+                    }
+                    else{
+                        k--;
+                        second_triplet_index++;
+                    }
+                }
+            }
+        }
+    return all_neighbours;
+
+}
+my_triplets hill_climb_stochastic(vector<int> numbers, int N,
+                                  function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
 
     auto start = chrono::steady_clock::now();
 
@@ -231,17 +259,18 @@ int main(int argc, char** argv) {
     show_my_multiset(numbers);
     test_for_target(numbers);
 
-    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
-        cout << "BF => # count: " << c << "; dt: " << dt << endl;
-    });
-    my_triplets best_solution_HCR = hill_climb_rnd(numbers, 10000, [](int c, double dt){
-        cout << "HCR => # count: " << c << "; dt: " << dt << endl;
-    });
 
-    cout << "\nBest BF: ";
-    show_my_triplets(best_solution_BF);
-    goal_function(best_solution_BF);
-    cout << "Best HCR: ";
-    show_my_triplets(best_solution_HCR);
-    goal_function(best_solution_HCR);
+//    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
+//        cout << "BF => # count: " << c << "; dt: " << dt << endl;
+//    });
+//    my_triplets best_solution_HCR = hill_climb_stochastic(numbers, 10000, [](int c, double dt) {
+//        cout << "HCR => # count: " << c << "; dt: " << dt << endl;
+//    });
+//
+//    cout << "\nBest BF: ";
+//    show_my_triplets(best_solution_BF);
+//    goal_function(best_solution_BF);
+//    cout << "Best HCR: ";
+//    show_my_triplets(best_solution_HCR);
+//    goal_function(best_solution_HCR);
 }

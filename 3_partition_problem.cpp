@@ -12,8 +12,9 @@ using namespace std;
 using my_multiset = vector<int>;
 using my_triplets = vector<vector<int>>;
 
-random_device rd;
-mt19937 rand_gen(rd());
+//random_device rd;
+//mt19937 rand_gen(rd());
+std::mt19937 rand_gen(time(nullptr));
 
 bool test_for_triplets(my_multiset multiset){
     if(multiset.size()%3 != 0){
@@ -116,7 +117,7 @@ double goal_function(my_triplets triplets){
         }
     }
 
-    cout << "->Current target: " << final_target << " ->Score: " << final_score <<"\n";
+//    cout << "->Current target: " << final_target << " ->Score: " << final_score <<"\n";
     return final_score;
 }
 
@@ -156,6 +157,7 @@ my_triplets brute_force(vector<int> numbers,
             stat_goal_function_calls++;
             show_my_triplets(current_triplets);
             score_check = goal_function(current_triplets);
+            cout << " =>Score: " << score_check << "\n";
             checked_solutions.push_back(current_triplets);
 
             if(score_check < best_score){
@@ -211,14 +213,13 @@ vector<my_triplets> generate_all_neighbours(my_triplets current_triplets){
             }
         }
     return all_neighbours;
-
 }
+
 my_triplets hill_climb_stochastic(vector<int> numbers, int N,
                                   function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
 
     auto start = chrono::steady_clock::now();
 
-    vector<my_triplets> checked_solutions;
     my_triplets best_solution = next_solution(numbers);
     double best_score = accumulate(numbers.begin(), numbers.end(), 0);
 
@@ -232,6 +233,7 @@ my_triplets hill_climb_stochastic(vector<int> numbers, int N,
         cout << i+1 << ") ";
         show_my_triplets(current_triplets);
         score_check = goal_function(current_triplets);
+        cout << " =>Score: " << score_check << "\n";
 
         if(score_check < best_score){
             best_solution = current_triplets;
@@ -248,6 +250,38 @@ my_triplets hill_climb_stochastic(vector<int> numbers, int N,
     return best_solution;
 }
 
+my_triplets hill_climb(vector<int> numbers, int N,
+                                  function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
+
+    auto start = chrono::steady_clock::now();
+
+    my_triplets best_solution = next_solution(numbers);
+    double best_score = goal_function(best_solution);
+
+    double score_check;
+
+    for(int i=0; i < N; i++){
+        auto all_neighbours = generate_all_neighbours(best_solution);
+        for(auto neighbour : all_neighbours){
+            score_check = goal_function(neighbour);
+            if(score_check<best_score){
+                best_solution = neighbour;
+                best_score = score_check;
+            }
+        }
+        cout << i+1 << ") ";
+        show_my_triplets(best_solution);
+        cout << " =>Score: " << best_score <<"\n";
+    }
+
+    auto finish = chrono::steady_clock::now();
+    chrono::duration<double> duration = finish - start;
+    on_statistics(N, duration.count());
+
+    return best_solution;
+}
+
+
 int main(int argc, char** argv) {
 
 
@@ -259,18 +293,23 @@ int main(int argc, char** argv) {
     show_my_multiset(numbers);
     test_for_target(numbers);
 
+    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
+        cout << "BF => # count: " << c << "; dt: " << dt << endl;
+    });
+    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 1000, [](int c, double dt) {
+        cout << "HCS => # count: " << c << "; dt: " << dt << endl;
+    });
+    my_triplets best_solution_HC = hill_climb(numbers, 1000, [](int c, double dt) {
+        cout << "HC => # count: " << c << "; dt: " << dt << endl;
+    });
 
-//    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
-//        cout << "BF => # count: " << c << "; dt: " << dt << endl;
-//    });
-//    my_triplets best_solution_HCR = hill_climb_stochastic(numbers, 10000, [](int c, double dt) {
-//        cout << "HCR => # count: " << c << "; dt: " << dt << endl;
-//    });
-//
-//    cout << "\nBest BF: ";
-//    show_my_triplets(best_solution_BF);
-//    goal_function(best_solution_BF);
-//    cout << "Best HCR: ";
-//    show_my_triplets(best_solution_HCR);
-//    goal_function(best_solution_HCR);
+    cout << "\nBest BF: ";
+    show_my_triplets(best_solution_BF);
+    cout << " score => " << goal_function(best_solution_BF);
+    cout << "\nBest HCS: ";
+    show_my_triplets(best_solution_HCS);
+    cout << " score => " << goal_function(best_solution_HCS);
+    cout << "\nBest HC: ";
+    show_my_triplets(best_solution_HC);
+    cout << " score => " << goal_function(best_solution_HC);
 }

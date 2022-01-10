@@ -7,6 +7,8 @@
 #include<algorithm>
 #include<numeric>
 #include<chrono>
+#include<set>
+#include<list>
 
 using namespace std;
 using my_multiset = vector<int>;
@@ -197,7 +199,8 @@ vector<my_triplets> generate_all_neighbours(my_triplets current_triplets){
         int second_triplet_index = 0;
             for(int j = 0; j < 3; j++){
                 for(int k = 0; k < number_of_swaps; k++){
-                    int second_element_index = k%3;
+                    int cop = k;
+                    int second_element_index = cop%3;
                     my_triplets buffer = current_triplets;
                     if(second_triplet_index != i) {
                         swap(buffer[i][j], buffer[second_triplet_index][second_element_index]);
@@ -239,8 +242,6 @@ my_triplets hill_climb_stochastic(vector<int> numbers, int N,
             best_solution = current_triplets;
             best_score = score_check;
         }
-
-//        if(best_score == 0) break;
     }
 
     auto finish = chrono::steady_clock::now();
@@ -281,6 +282,73 @@ my_triplets hill_climb(vector<int> numbers, int N,
     return best_solution;
 }
 
+my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
+                        function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
+
+    auto start = chrono::steady_clock::now();
+
+    my_triplets best_solution = next_solution(numbers);
+    double best_score = goal_function(best_solution);
+
+    set<vector<vector<int>>> tabu_set;
+    list<vector<vector<int>>> tabu_list;
+
+    double score_check;
+
+    auto is_in_tabu = [&](auto e) {
+        return tabu_set.count(e);
+    };
+
+    auto add_to_tabu = [&](auto e) {
+        tabu_set.insert(e);
+        tabu_list.push_back(e);
+    };
+
+    auto shrink_taboo = [&]() {
+        if (tabu_set.size() > tabu_size) {
+            tabu_set.erase(tabu_list.front());
+            tabu_list.pop_front();
+        }
+    };
+
+    auto current_triplets = best_solution;
+
+    for (int i = 0; i < N; i++) {
+
+        auto current_neighbours = generate_all_neighbours(best_solution);
+
+        current_neighbours.erase(remove_if(current_neighbours.begin(), current_neighbours.end(), [&](auto e) { return is_in_tabu(e); }), current_neighbours.end());
+
+        if (current_neighbours.size() == 0) break;
+
+        current_triplets = *min_element(current_neighbours.begin(), current_neighbours.end(), [&](auto a, auto b) {
+            return goal_function(a) > goal_function(b);
+        });
+
+        add_to_tabu(current_triplets);
+
+        score_check = goal_function(current_triplets);
+
+        if (goal_function(current_triplets) < goal_function(best_solution)) {
+            best_solution = current_triplets;
+            best_score = score_check;
+        }
+
+        cout << i+1 << ") ";
+        show_my_triplets(current_triplets);
+        cout << " =>Score: " << score_check <<"\n";
+
+        shrink_taboo();
+    }
+
+    auto finish = chrono::steady_clock::now();
+    chrono::duration<double> duration = finish - start;
+
+    on_statistics(N, duration.count());
+
+    return best_solution;
+    }
+
 
 int main(int argc, char** argv) {
 
@@ -293,23 +361,29 @@ int main(int argc, char** argv) {
     show_my_multiset(numbers);
     test_for_target(numbers);
 
-    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
-        cout << "BF => # count: " << c << "; dt: " << dt << endl;
-    });
-    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 1000, [](int c, double dt) {
+//    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
+//        cout << "BF => # count: " << c << "; dt: " << dt << endl;
+//    });
+    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 100, [](int c, double dt) {
         cout << "HCS => # count: " << c << "; dt: " << dt << endl;
     });
-    my_triplets best_solution_HC = hill_climb(numbers, 1000, [](int c, double dt) {
+    my_triplets best_solution_HC = hill_climb(numbers, 100, [](int c, double dt) {
         cout << "HC => # count: " << c << "; dt: " << dt << endl;
     });
+    my_triplets best_solution_tabu = tabu_search(numbers, 100, 50, [](int c, double dt) {
+        cout << "tabu => # count: " << c << "; dt: " << dt << endl;
+    });
 
-    cout << "\nBest BF: ";
-    show_my_triplets(best_solution_BF);
-    cout << " score => " << goal_function(best_solution_BF);
+//    cout << "\nBest BF: ";
+//    show_my_triplets(best_solution_BF);
+//    cout << " score => " << goal_function(best_solution_BF);
     cout << "\nBest HCS: ";
     show_my_triplets(best_solution_HCS);
     cout << " score => " << goal_function(best_solution_HCS);
     cout << "\nBest HC: ";
     show_my_triplets(best_solution_HC);
     cout << " score => " << goal_function(best_solution_HC);
+    cout << "\nBest tabu: ";
+    show_my_triplets(best_solution_tabu);
+    cout << " score => " << goal_function(best_solution_tabu);
 }

@@ -322,7 +322,7 @@ my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
         if (current_neighbours.size() == 0) break;
 
         current_triplets = *min_element(current_neighbours.begin(), current_neighbours.end(), [&](auto a, auto b) {
-            return goal_function(a) > goal_function(b);
+            return goal_function(a) < goal_function(b);
         });
 
         add_to_tabu(current_triplets);

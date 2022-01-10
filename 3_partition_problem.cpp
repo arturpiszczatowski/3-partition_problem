@@ -322,7 +322,7 @@ my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
         if (current_neighbours.size() == 0) break;
 
         current_triplets = *min_element(current_neighbours.begin(), current_neighbours.end(), [&](auto a, auto b) {
-            return goal_function(a) < goal_function(b);
+            return goal_function(a) > goal_function(b);
         });
 
         add_to_tabu(current_triplets);
@@ -364,12 +364,12 @@ int main(int argc, char** argv) {
 //    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
 //        cout << "BF => # count: " << c << "; dt: " << dt << endl;
 //    });
-    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 100, [](int c, double dt) {
-        cout << "HCS => # count: " << c << "; dt: " << dt << endl;
-    });
-    my_triplets best_solution_HC = hill_climb(numbers, 100, [](int c, double dt) {
-        cout << "HC => # count: " << c << "; dt: " << dt << endl;
-    });
+//    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 100, [](int c, double dt) {
+//        cout << "HCS => # count: " << c << "; dt: " << dt << endl;
+//    });
+//    my_triplets best_solution_HC = hill_climb(numbers, 100, [](int c, double dt) {
+//        cout << "HC => # count: " << c << "; dt: " << dt << endl;
+//    });
     my_triplets best_solution_tabu = tabu_search(numbers, 100, 50, [](int c, double dt) {
         cout << "tabu => # count: " << c << "; dt: " << dt << endl;
     });
@@ -377,13 +377,13 @@ int main(int argc, char** argv) {
 //    cout << "\nBest BF: ";
 //    show_my_triplets(best_solution_BF);
 //    cout << " score => " << goal_function(best_solution_BF);
-    cout << "\nBest HCS: ";
-    show_my_triplets(best_solution_HCS);
-    cout << " score => " << goal_function(best_solution_HCS);
-    cout << "\nBest HC: ";
-    show_my_triplets(best_solution_HC);
-    cout << " score => " << goal_function(best_solution_HC);
-    cout << "\nBest tabu: ";
+//    cout << "\nBest HCS: ";
+//    show_my_triplets(best_solution_HCS);
+//    cout << " score => " << goal_function(best_solution_HCS);
+//    cout << "\nBest HC: ";
+//    show_my_triplets(best_solution_HC);
+//    cout << " score => " << goal_function(best_solution_HC);
+//    cout << "\nBest tabu: ";
     show_my_triplets(best_solution_tabu);
     cout << " score => " << goal_function(best_solution_tabu);
 }

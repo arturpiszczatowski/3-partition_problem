@@ -9,6 +9,8 @@
 #include<chrono>
 #include<set>
 #include<list>
+#include<map>
+
 
 using namespace std;
 using my_multiset = vector<int>;
@@ -135,7 +137,9 @@ vector<my_triplets> all_permutations(my_triplets triplets){
 }
 
 my_triplets brute_force(vector<int> numbers,
-                        function<void(int c, double dt)> on_statistics = [](int c, double dt){}){
+                        function<void(int c, double dt)> on_statistics = [](int c, double dt){},
+                        function<void(int i, double current_goal_val, double goal_val)>
+                        on_iteration = [](int i, double current_goal_val, double goal_val) {}){
     auto start = chrono::steady_clock::now();
 
     vector<my_triplets> checked_solutions;
@@ -171,6 +175,8 @@ my_triplets brute_force(vector<int> numbers,
                 iteration++;
                 checked_solutions.push_back(permutation);
             }
+
+            on_iteration(stat_goal_function_calls, score_check, best_score);
         }
     } while(score_check != 0 && iteration < iteration_limit);
     auto finish = chrono::steady_clock::now();
@@ -186,7 +192,7 @@ my_triplets generate_random_neighbour(my_triplets current_triplets){
     int index_set = distr_set(rand_gen);
     int index_triplet_a = distr_triplet(rand_gen);
     int index_triplet_b = distr_triplet(rand_gen);
-    std::swap(current_triplets[index_set][index_triplet_a], current_triplets[index_set+1][index_triplet_b]);
+    swap(current_triplets[index_set][index_triplet_a], current_triplets[index_set+1][index_triplet_b]);
     return current_triplets;
 }
 
@@ -219,7 +225,9 @@ vector<my_triplets> generate_all_neighbours(my_triplets current_triplets){
 }
 
 my_triplets hill_climb_stochastic(vector<int> numbers, int N,
-                                  function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
+                                  function<void(int c, double dt)> on_statistics = [](int c, double dt) {},
+                                  function<void(int i, double current_goal_val, double goal_val)>
+                                  on_iteration = [](int i, double current_goal_val, double goal_val) {}){
 
     auto start = chrono::steady_clock::now();
 
@@ -242,6 +250,8 @@ my_triplets hill_climb_stochastic(vector<int> numbers, int N,
             best_solution = current_triplets;
             best_score = score_check;
         }
+
+        on_iteration(i, score_check, best_score);
     }
 
     auto finish = chrono::steady_clock::now();
@@ -252,7 +262,9 @@ my_triplets hill_climb_stochastic(vector<int> numbers, int N,
 }
 
 my_triplets hill_climb(vector<int> numbers, int N,
-                                  function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
+                       function<void(int c, double dt)> on_statistics = [](int c, double dt) {},
+                       function<void(int i, double current_goal_val, double goal_val)>
+                       on_iteration = [](int i, double current_goal_val, double goal_val) {}){
 
     auto start = chrono::steady_clock::now();
 
@@ -273,6 +285,8 @@ my_triplets hill_climb(vector<int> numbers, int N,
         cout << i+1 << ") ";
         show_my_triplets(best_solution);
         cout << " =>Score: " << best_score <<"\n";
+
+        on_iteration(i, score_check, best_score);
     }
 
     auto finish = chrono::steady_clock::now();
@@ -283,7 +297,9 @@ my_triplets hill_climb(vector<int> numbers, int N,
 }
 
 my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
-                        function<void(int c, double dt)> on_statistics = [](int c, double dt) {}){
+                        function<void(int c, double dt)> on_statistics = [](int c, double dt) {},
+                        function<void(int i, double current_goal_val, double goal_val)>
+                        on_iteration = [](int i, double current_goal_val, double goal_val) {}){
 
     auto start = chrono::steady_clock::now();
 
@@ -338,6 +354,8 @@ my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
         show_my_triplets(current_triplets);
         cout << " =>Score: " << score_check <<"\n";
 
+        on_iteration(i, score_check, best_score);
+
         shrink_taboo();
     }
 
@@ -350,40 +368,113 @@ my_triplets tabu_search(vector<int> numbers, int N, int tabu_size,
     }
 
 
-int main(int argc, char** argv) {
+map<string, string> args_to_map(vector<string> arguments){
+    map<string, string> ret;
+    string argname ="";
+    for(auto param : arguments){
+        if((param.size() > 2) && (param.substr(0, 2) == "--")){
+            argname = param.substr(2);
+        } else {
+            ret[argname] = param;
+        }
+    }
+    return ret;
+}
 
+vector<int> generate_random_problem(int number_of_triplets){
+    vector<int> problem_set;
 
-    my_multiset numbers = acquier_numbers(argv[1]);
-    if(numbers.empty()){
-        return 0;
+    uniform_int_distribution<int> random(1,30);
+
+    for(int i=0; i<number_of_triplets*3;i++){
+        problem_set.push_back(random(rand_gen));
     }
 
-    show_my_multiset(numbers);
-    test_for_target(numbers);
+    int sum = accumulate(problem_set.begin(), problem_set.end(), 0);
+    int control = sum%number_of_triplets;
 
-//    my_triplets best_solution_BF = brute_force(numbers, [](int c, double dt){
-//        cout << "BF => # count: " << c << "; dt: " << dt << endl;
-//    });
-//    my_triplets best_solution_HCS = hill_climb_stochastic(numbers, 100, [](int c, double dt) {
-//        cout << "HCS => # count: " << c << "; dt: " << dt << endl;
-//    });
-//    my_triplets best_solution_HC = hill_climb(numbers, 100, [](int c, double dt) {
-//        cout << "HC => # count: " << c << "; dt: " << dt << endl;
-//    });
-    my_triplets best_solution_tabu = tabu_search(numbers, 100, 50, [](int c, double dt) {
-        cout << "tabu => # count: " << c << "; dt: " << dt << endl;
-    });
+    while(control!=0){
+        problem_set[random(rand_gen)] -= 1;
+        sum = accumulate(problem_set.begin(), problem_set.end(), 0);
+        control = sum%number_of_triplets;
+    }
 
-//    cout << "\nBest BF: ";
-//    show_my_triplets(best_solution_BF);
-//    cout << " score => " << goal_function(best_solution_BF);
-//    cout << "\nBest HCS: ";
-//    show_my_triplets(best_solution_HCS);
-//    cout << " score => " << goal_function(best_solution_HCS);
-//    cout << "\nBest HC: ";
-//    show_my_triplets(best_solution_HC);
-//    cout << " score => " << goal_function(best_solution_HC);
-//    cout << "\nBest tabu: ";
-    show_my_triplets(best_solution_tabu);
-    cout << " score => " << goal_function(best_solution_tabu);
+
+
+    return problem_set;
+}
+
+int main(int argc, char** argv) {
+
+    map<string, string> parameters = {
+            {"size", "3"},
+            {"iterations", "1000"},
+            {"method", "brute_force"},
+            {"print_result", "false"},
+            {"tabu_size", "50"}
+    };
+
+    for(auto [k, v] : args_to_map(vector<string>(argv, argv + argc))){
+        parameters[k] = v;
+    }
+
+    my_multiset problem = generate_random_problem(stoi(parameters["size"]));
+
+    show_my_multiset(problem);
+    cout << endl;
+
+    int iterations = stoi(parameters["iterations"]);
+
+    my_triplets best_solution;
+
+    auto on_finish =
+            [](int c, double dt) {
+                cout << "# count: " << c << "; dt:  " << dt << endl;
+            };
+
+    auto on_step = [&](int i, double current_goal_val, double goal_v) {
+        cout << i << " " << current_goal_val << " " << goal_v << endl;
+    };
+
+
+    if (parameters["method"] == "brute_force") {
+        best_solution = brute_force(
+                problem,
+                on_finish,
+                on_step);
+
+    } else if (parameters["method"] == "hill_climb_stochastic") {
+        best_solution = hill_climb_stochastic(
+                problem,
+                iterations,
+                on_finish,
+                on_step);
+
+    } else if (parameters["method"] == "hill_climb") {
+        best_solution = hill_climb(
+                problem,
+                iterations,
+                on_finish,
+                on_step);
+
+    } else if (parameters["method"] == "tabu_search") {
+        best_solution = tabu_search(
+                problem,
+                iterations,
+                stoi(parameters["tabu_size"]),
+                on_finish,
+                on_step);
+    }
+
+    if (parameters["print_result"] == "true") {
+        cout << "# best " << parameters["method"] << " solution:\n";
+        show_my_multiset(problem);
+        cout << " => ";
+        show_my_triplets(best_solution);
+        cout << endl;
+    }
+    cout << "# best " << parameters["method"] << " result: " <<
+         goal_function(best_solution) << endl;
+
+    return 0;
 }

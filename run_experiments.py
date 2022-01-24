@@ -10,9 +10,9 @@ statistics = {
 }
 
 for method_name in statistics:
-    for problem_size in range(2, 4):
+    for problem_size in range(2, 8):
         for repeat in range(1, 25):
-            cmndName = "3pp --size " + str(problem_size) + " --method " + method_name + " --iterations 100 --tabu_size 50"
+            cmndName = "3pp --size " + str(problem_size) + " --method " + method_name + " --iterations 1000 --tabu_size 50"
             print(cmndName)
             result = os.popen(cmndName)
             output = result.read()

@@ -399,10 +399,60 @@ vector<int> generate_random_problem(int number_of_triplets){
         control = sum%number_of_triplets;
     }
 
-
-
     return problem_set;
 }
+
+double temperature(int k) {
+    return 1000/k;
+}
+
+my_triplets simulated_annealing(vector<int> p0,
+                                   int iterations,
+                                   function<double(int)> T,
+                                   function<void(int c, double dt)> on_statistics = [](int c, double dt){},
+                                   function<void(int i, double current_goal_val, double goal_val)>
+                                   on_iteration = [](int i, double current_goal_val, double goal_val) {}){
+
+    auto start = chrono::steady_clock::now();
+
+
+    my_triplets current_triplets = next_solution(p0);
+    my_triplets best_triplets = current_triplets;
+    int stat_goal_function_calls = 0;
+
+    uniform_real_distribution<> u_k(0.0, 1.0);
+
+    for(int i=0; i <iterations; i++){
+        my_triplets neighbour_solution = generate_random_neighbour(current_triplets);
+        if(goal_function(neighbour_solution) < goal_function(current_triplets)){
+            current_triplets = neighbour_solution;
+        } else {
+            double u = u_k(rand_gen);
+            if(u < exp(-abs(goal_function(neighbour_solution) - goal_function(current_triplets)) / T(i))){
+                current_triplets = neighbour_solution;
+            } else {
+
+            }
+        }
+        if(goal_function(current_triplets) < goal_function(best_triplets)){
+            best_triplets = current_triplets;
+        }
+        stat_goal_function_calls++;
+        cout << i+1 << ") ";
+        show_my_triplets(current_triplets);
+        cout << " score: " << goal_function(current_triplets) << endl;
+
+        on_iteration(stat_goal_function_calls, goal_function(current_triplets), goal_function(best_triplets));
+    }
+
+    auto finish = chrono::steady_clock::now();
+    chrono::duration<double> duration = finish - start;
+    on_statistics(stat_goal_function_calls, duration.count());
+
+
+    return best_triplets;
+}
+
 
 int main(int argc, char** argv) {
 
@@ -464,6 +514,12 @@ int main(int argc, char** argv) {
                 stoi(parameters["tabu_size"]),
                 on_finish,
                 on_step);
+    } else if (parameters["method"] == "simulated_annealing") {
+        best_solution = simulated_annealing(problem,
+                                            iterations,
+                                            temperature,
+                                            on_finish,
+                                            on_step);
     }
 
     if (parameters["print_result"] == "true") {
